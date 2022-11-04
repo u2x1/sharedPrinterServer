@@ -36,15 +36,14 @@ app = Flask(__name__)
 def hello_world():
     r = request.args.get('info')
     if r==None:
-        # do something
         return 'args error'
     return r
 
 # --------------------------------------------通常为小程序使用------------------------------------
 
 def check_token(openid):
-    res = db.openid(openid)
-    if res:
+    ret = db.openid(openid)
+    if ret:
         return True
     else:
         return False
@@ -65,11 +64,11 @@ def getip():
 def getPrinter():
     printer_id = request.args.get('printerid')
     if printer_id==None:
-        res = db.getPrinterList()
-        return jsonify(res)
+        ret = db.getPrinterList()
+        return jsonify(ret)
     else:
-        res = db.get_printer_info(printer_id)
-        return jsonify(res)
+        ret = db.get_printer_info(printer_id)
+        return jsonify(ret)
 
 # 创建一个新订单
 @app.route('/wwkserver/addorder/', methods=['POST'])
@@ -148,8 +147,8 @@ def uploadfile():
         page_num, page_direction = get_pdf_page(f"{file_directory}{storage_name}")
     elif docType not in ["png", "jpg", "jpeg"]:
         # word等文档
-        with os.popen(f"unoconv -f pdf {file_directory}{storage_name}") as res:
-            print(res)
+        with os.popen(f"unoconv -f pdf {file_directory}{storage_name}") as ret:
+            print(ret)
         storage_name = re.sub("\..+", ".pdf", storage_name)
         page_num, page_direction = get_pdf_page(f"{file_directory}{storage_name}")
     else: 
@@ -216,18 +215,18 @@ def checkOrderStatus():
     if printer_id==None:
         return 'args error'
     else:
-        res = db.getOrderByPrinter(printer_id)
+        ret = db.getOrderByPrinter(printer_id)
         rank = 0
         status = True
-        print(len(res))
-        # print(res)
-        for i in range(len(res)):
+        print(len(ret))
+        # print(ret)
+        for i in range(len(ret)):
             # print(order_id, type(order_id))
-            # print(res[i].order_id, type(res[i].order_id))
-            if res[i].order_id==order_id:
-                print(res[i].status)
+            # print(ret[i].order_id, type(ret[i].order_id))
+            if ret[i].order_id==order_id:
+                print(ret[i].status)
                 rank = i
-                status = res[i].status
+                status = ret[i].status
                 break
         return{
             "order_id": order_id,
@@ -273,7 +272,6 @@ def lastorder():
             return order.getOrderString()
     return "0"
 
-# 2022/5/22 
 @app.route('/wwkserver/cardposition/', methods=['POST'])
 def get_card_position():
     form = request.form
@@ -294,7 +292,6 @@ def get_card_position():
         "id": file_id
     }
 
-# 2022/5/22 
 @app.route('/wwkserver/transform/', methods=['POST'])
 def transform():
     form = json.loads(request.data)
@@ -319,7 +316,6 @@ def transform():
     db.update_position(position, file_id)
     return "ok"
 
-# 2022/5/22 
 @app.route('/wwkserver/getidcard/', methods=['GET'])
 def getincard():
     openid = request.args.get("openid")
@@ -330,8 +326,8 @@ def getincard():
 
     # print(openid, file_id, file_name)
 
-    res = db.read_card(openid, file_id, file_name)
-    print(res)
+    ret = db.read_card(openid, file_id, file_name)
+    print(ret)
 
     response = make_response(
         send_from_directory(idcard_directory, f"extracted-{file_name}", as_attachment=True))
@@ -345,23 +341,23 @@ def checkOrderByPrinterID():
     # alivePrinter.keepAlive(printerid)
     if printerid==None:
         return 'args error'
-    res = db.getOrderByPrinter(printerid)
+    ret = db.getOrderByPrinter(printerid)
 
     if request.method=='GET':
-        get_orders = request.args.getlist('orders')
+        orders = request.args.getlist('orders')
     if request.method=='POST':
-        get_orders = request.form.getlist('orders')
-        
-    if get_orders:
-        print(get_orders)
+        orders = request.form.getlist('orders')
+
+    if orders:
+        print(orders)
         remove_list = []
-        for order in res:
-            for get_order_id in get_orders:
-                if order.order_id == int(get_order_id):
+        for order in ret:
+            for order_id in orders:
+                if order.order_id == int(order_id):
                     remove_list.append(order)
         for order in remove_list:
-            res.remove(order)
-    return jsonify([oneOrder.getOrderString() for oneOrder in res])
+            ret.remove(order)
+    return jsonify([oneOrder.getOrderString() for oneOrder in ret])
 
 @app.route('/wwkserver/getorderfiles/')
 def getFilesByOrderId():
