@@ -10,28 +10,12 @@ from mytool.File import File
 
 class DbClient(object):
   def __init__(self, host, account, password, databaseName):
-    # self.lock = Lock()
     self._host = host
     self._account = account
     self._password = password
     self._databaseName = databaseName
-    # self.db = pymysql.connect(host=host, user=account, password=password, database=databaseName, autocommit = True)
-    # self.cursor = self.db.cursor()
-    self.lastOrderID = self.readLastOrderId()[0][0] 
     self.conn_queue = queue.Queue(0)
-
-  def _put_conn(self, conn):
-    self.conn_queue.put(conn)
-
-  def _get_conn(self):
-    conn = self.conn_queue.get()
-    return conn if conn else self._create_new_conn()
-
-  def _create_new_conn(self):
-    return pymysql.connect(host=self._host
-                         , user=self._account
-                         , password=self._password
-                         , database=self._databaseName, autocommit = True)
+    self.lastOrderID = self.readLastOrderId()[0][0] 
 
   def use_card(self, openid, file_name):
     self.write("doclog", "(openid,file_name,time)", f'("{openid}","{file_name}",NOW())')
@@ -45,7 +29,6 @@ class DbClient(object):
 
   def writeIP(self, ip:str):
     self.write("ip", "(ip, time)", f'("{ip}",NOW())')
-
 
 
   def getPrinterList(self):
@@ -254,7 +237,6 @@ class DbClient(object):
       cur.execute(sql)
       if needFetch:
         rst = cur.fetchall() 
-      conn.commit()
       return rst if needFetch else True
     except Exception as e:
       conn.rollback()
@@ -263,6 +245,23 @@ class DbClient(object):
         return False
     finally:
       self._put_conn(conn)
+
+  def _put_conn(self, conn):
+    self.conn_queue.put(conn)
+
+  def _get_conn(self):
+    if not self.conn_queue.empty():
+      conn = self.conn_queue.get()
+      if conn: 
+        return conn
+    return self._create_new_conn()
+
+  def _create_new_conn(self):
+    return pymysql.connect(host=self._host
+                         , user=self._account
+                         , password=self._password
+                         , database=self._databaseName, autocommit = True)
+
 
 
   def closeDB(self):
@@ -273,8 +272,6 @@ class DbClient(object):
           conn.close()
     except queue.Empty:
         pass
-
-
 
 
 if __name__ == '__main__':
