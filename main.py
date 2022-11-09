@@ -185,7 +185,6 @@ def uploadfile():
     response.headers = headers
     return response
 
-# 提交订单
 @app.route('/wwkserver/addorder/submitorder', methods=['POST'])
 def submitorder():
     form = json.loads(request.data)
@@ -212,23 +211,18 @@ def submitorder():
 def checkOrderStatus():
     printer_id = request.args.get('printer_id')
     order_id = int(request.args.get("order_id"))
-    if printer_id==None:
+    if printer_id == None:
         return 'args error'
     else:
         ret = db.getOrderByPrinter(printer_id)
         rank = 0
         status = True
-        print(len(ret))
-        # print(ret)
         for i in range(len(ret)):
-            # print(order_id, type(order_id))
-            # print(ret[i].order_id, type(ret[i].order_id))
-            if ret[i].order_id==order_id:
-                print(ret[i].status)
+            if ret[i].order_id == order_id:
                 rank = i
                 status = ret[i].status
                 break
-        return{
+        return {
             "order_id": order_id,
             "rank": rank,
             "status": status,

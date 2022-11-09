@@ -1,8 +1,8 @@
 # import sys
 # sys.path.append("..")
-from threading import Lock
+# from threading import Lock
 import pymysql
-import time
+import queue
 import json
 from mytool.Order import Order
 from mytool.File import File
@@ -10,12 +10,28 @@ from mytool.File import File
 
 class DbClient(object):
   def __init__(self, host, account, password, databaseName):
-    self.lock = Lock()
-    self.db = pymysql.connect(host=host, user=account, password=password, database=databaseName, autocommit = True)
-    self.cursor = self.db.cursor()
+    # self.lock = Lock()
+    self._host = host
+    self._account = account
+    self._password = password
+    self._databaseName = databaseName
+    # self.db = pymysql.connect(host=host, user=account, password=password, database=databaseName, autocommit = True)
+    # self.cursor = self.db.cursor()
     self.lastOrderID = self.readLastOrderId()[0][0] 
+    self.conn_queue = queue.Queue(0)
 
+  def _put_conn(self, conn):
+    self.conn_queue.put(conn)
 
+  def _get_conn(self):
+    conn = self.conn_queue.get()
+    return conn if conn else self._create_new_conn()
+
+  def _create_new_conn(self):
+    return pymysql.connect(host=self._host
+                         , user=self._account
+                         , password=self._password
+                         , database=self._databaseName, autocommit = True)
 
   def use_card(self, openid, file_name):
     self.write("doclog", "(openid,file_name,time)", f'("{openid}","{file_name}",NOW())')
@@ -232,32 +248,31 @@ class DbClient(object):
 
 
   def doSQL(self, sql, needFetch):
+    conn = self._get_conn()
     try:
-      self.lock.acquire()
-      self.cursor.execute(sql)
+      cur = conn.cursor()
+      cur.execute(sql)
       if needFetch:
-        rst = self.cursor.fetchall() 
-        self.resetCursor()
-      self.db.commit()
-      self.lock.release()
+        rst = cur.fetchall() 
+      conn.commit()
       return rst if needFetch else True
     except Exception as e:
-      self.db.rollback()
-      self.resetCursor()
-      if (self.lock.locked()): 
-        self.lock.release()
+      conn.rollback()
       print(f"error on SQL[{sql}]: {e}")
       if not needFetch:
         return False
+    finally:
+      self._put_conn(conn)
 
-
-
-  def resetCursor(self):
-    self.cursor.close()
-    self.cursor = self.db.cursor()
 
   def closeDB(self):
-    self.db.close()
+    try:
+      while True:
+        conn = self.conn_queue.get_nowait()
+        if conn:
+          conn.close()
+    except queue.Empty:
+        pass
 
 
 
