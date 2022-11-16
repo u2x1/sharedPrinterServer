@@ -127,7 +127,6 @@ class DbClient(object):
       return True
 
   def addOrder(self, order):
-    # print(f'({order.printerID},"{order.orderUser}",NOW(),{order.pageNum},"{order.printType}","{file_list_write}","{file_size_write}","{str(order.isDuplex)}")')
     ret = self.write("myorder", 
       "(printer_id,openid,order_time,file_num,total_fee,is_pay,is_ack,status)", 
       f'({order.printer_id},"{order.openid}",NOW(),{order.file_num},{order.total_fee},{order.is_pay},{order.is_ack},{order.status})')
@@ -236,7 +235,7 @@ class DbClient(object):
       cur = conn.cursor()
       cur.execute(sql)
       if needFetch:
-        rst = cur.fetchall() 
+        rst = cur.fetchall()
       return rst if needFetch else True
     except Exception as e:
       conn.rollback()

@@ -199,6 +199,7 @@ def submitorder():
         file = File(
             file_id = i['file_id'],
             is_duplex = i["is_duplex"],
+            page_range = i["page_range"],
             page_direction = i["page_direction"],
             copy_num = i["copy_num"]
             )
@@ -294,11 +295,6 @@ def transform():
     position = form.get("position")
     size = form.get("size")
     file_id = form.get("file_id")
-    # print(form)
-    # print(openid)
-    # print(file_name)
-    # print(position)
-    # print(size)
     if not (openid or file_name or position or size or file_id):
         return "error"
 
