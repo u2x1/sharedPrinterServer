@@ -196,10 +196,16 @@ def submitorder():
     db.submitorder(order_id, is_ack, file_num)
     db.update_order_fee(order_fee, order_id)
     for i in file_list:
+        start = i["page_range_start"]
+        end = i["page_range_end"]
+        range += start if start else '1'
+        range += '-'
+        range += end if end else i["page_num"]
+
         file = File(
             file_id = i['file_id'],
             is_duplex = i["is_duplex"],
-            page_range = i["page_range"],
+            page_range = range,
             page_direction = i["page_direction"],
             copy_num = i["copy_num"]
             )
