@@ -97,6 +97,7 @@ class DbClient(object):
       , 'page_num': file.page_num
       , 'copy_num': file.copy_num
       , 'is_duplex': file.is_duplex
+      , 'is_booklet': file.is_booklet
       , 'page_range': quote(file.page_range)
       , 'page_direction': quote(file.page_direction)
       , 'status': file.status
@@ -108,6 +109,7 @@ class DbClient(object):
   def updateFileInfo(self, file):
     return self.update("file", "file_id", file.file_id, {
           'is_duplex': file.is_duplex
+        , 'is_booklet': file.is_booklet
         , 'page_direction': quote(file.page_direction)
         , 'copy_num': file.copy_num
       })

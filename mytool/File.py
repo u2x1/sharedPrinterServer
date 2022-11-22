@@ -21,7 +21,7 @@ from time import time,mktime
 
 class File(object):
   def __init__(self, file_id=0, openid="", order_id=0, file_name='', 
-    storage_name='', page_num=0, copy_num=1, is_duplex=True, 
+    storage_name='', page_num=0, copy_num=1, is_duplex=True, is_booklet=True,
     page_range='', page_direction='portrait', status=False, 
     file_size=0, upload_time=0, file_type='file', dbres=None):
     # 从数据库获取的数据
@@ -40,6 +40,7 @@ class File(object):
       self.file_size = dbres[11]
       self.upload_time = int(mktime(dbres[12].timetuple()))
       self.file_type = dbres[13]
+      self.is_booklet = dbres[14]
     else:
       self.file_id = file_id
       self.openid = openid
@@ -49,6 +50,7 @@ class File(object):
       self.page_num = page_num
       self.copy_num = copy_num
       self.is_duplex = is_duplex
+      self.is_booklet = is_booklet
       self.page_range = page_range
       self.page_direction = page_direction
       self.status = status

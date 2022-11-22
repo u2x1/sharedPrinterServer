@@ -204,12 +204,11 @@ def submitorder():
         range += str(start) if start else '1'
         range += '-'
         range += str(end) if end else i["page_num"]
-        print(start)
-        print(end)
 
         file = File(
             file_id = i['file_id'],
             is_duplex = i["is_duplex"],
+            is_booklet = i["is_booklet"],
             page_range = range,
             page_direction = i["page_direction"],
             copy_num = i["copy_num"],
