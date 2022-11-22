@@ -1,12 +1,15 @@
 # import sys
 # sys.path.append("..")
 # from threading import Lock
+# from Order import Order
 import pymysql
 import queue
 import json
 from mytool.Order import Order
 from mytool.File import File
-# from Order import Order
+
+def quote(s:str):
+  return "'"+s+"'" if s else 'NULL'
 
 class DbClient(object):
   def __init__(self, host, account, password, databaseName):
@@ -18,17 +21,27 @@ class DbClient(object):
     self.lastOrderID = self.readLastOrderId()[0][0] 
 
   def use_card(self, openid, file_name):
-    self.write("doclog", "(openid,file_name,time)", f'("{openid}","{file_name}",NOW())')
+    kvs = {
+        'openid': quote(openid)
+      , 'file_name': quote(file_name)
+      , 'time': 'NOW()'
+    }
+    self.write("doclog", kvs)
     return self.read("doclog", "max(id)")[0][0]
 
   def update_position(self, position, file_id):
-    self.update("doclog", "position", f"'{json.dumps(position)}'", "id", file_id)
+    self.update("doclog", "id", file_id,
+      {"position": quote(json.dumps(position))})
 
   def read_card(self, openid, file_id, file_name):
     return self.read("doclog", "openid", id=file_id, file_name=f'"{file_name}"')
 
   def writeIP(self, ip:str):
-    self.write("ip", "(ip, time)", f'("{ip}",NOW())')
+    kvs = {
+        'ip': quote(ip)
+      , 'time': 'NOW()'
+    }
+    self.write("ip", kvs)
 
 
   def getPrinterList(self):
@@ -62,76 +75,55 @@ class DbClient(object):
       return printer
 
   def activatePrinter(self, PrinterID):
-    return self.update("myprinter", "status", 1, "printer_id", PrinterID)
+    return self.update("myprinter", "printer_id", PrinterID,
+              {"status": 1})
 
   def deActivatePrinter(self, PrinterID):
-    return self.update("myprinter", "status", 0, "printer_id", PrinterID)
+    return self.update("myprinter", "printer_id", PrinterID,
+              {"status": 0})
 
 
 
-  def change_page_direction(self, file_id, page_direction):
-    return self.update("file", "page_direction", f"'{page_direction}'", "file_id", file_id)
 
   def addFile(self, file):
-    if not file.page_direction:
-      ret = self.write("file",
-          (
-            "(file_id, openid, order_id, file_name, storage_name, "
-            "page_num, copy_num, is_duplex, page_range, page_direction, "
-            "status, file_size, upload_time, file_type)"
-          ),
-          (
-            f'({file.file_id}, "{file.openid}", {file.order_id}, '
-            f'"{file.file_name}", "{file.storage_name}", {file.page_num or 0}, '
-            f'{file.copy_num}, {file.is_duplex}, "{file.page_range}", '
-            f'NULL, {file.status}, {file.file_size}, '
-            f'NOW(), "{file.file_type}")'
-          )
-        )
-    else:
-      ret = self.write("file", 
-        (
-          "(file_id, openid, order_id, file_name, storage_name, "
-          "page_num, copy_num, is_duplex, page_range, page_direction, "
-          "status, file_size, upload_time)"
-        ),
-        (
-          f'({file.file_id}, "{file.openid}", {file.order_id}, '
-          f'"{file.file_name}", "{file.storage_name}", {file.page_num or 0}, '
-          f'{file.copy_num}, {file.is_duplex}, "{file.page_range}", '
-          f'"{file.page_direction}", {file.status}, {file.file_size}, '
-          f'NOW())'
-        )
-        )
-    if ret:
+    kvs = {
+        'file_id': file.file_id
+      , 'file_size': file.file_size
+      , 'file_type': file.file_type
+      , 'storage_name': quote(file.file_name)
+      , 'open_id': quote(file.open_id)
+      , 'order_id': file.order_id
+      , 'page_num': file.page_num
+      , 'copy_num': file.copy_num
+      , 'is_duplex': file.is_duplex
+      , 'page_range': quote(file.page_range)
+      , 'page_direction': quote(file.page_direction)
+      , 'status': file.status
+      , 'upload_time': "NOW()"
+    }
+    if self.write("file", kvs):
       return self.read("file", "max(file_id)")[0][0]
 
   def updateFileInfo(self, file):
-    if not file.page_direction:
-      sql = f'''
-        update file set 
-        is_duplex={file.is_duplex},
-        copy_num={file.copy_num} 
-        where file_id={file.file_id};
-      '''
-    else:
-      sql = f'''
-        update file set 
-        is_duplex={file.is_duplex},
-        page_direction='{file.page_direction}',
-        copy_num={file.copy_num} 
-        where file_id={file.file_id};
-      '''
-    ret = self.doSQL(sql, True)
-    if ret:
-      return True
+    return self.update("file", "file_id", file.file_id, {
+          'is_duplex': file.is_duplex
+        , 'page_direction': quote(file.page_direction)
+        , 'copy_num': file.copy_num
+      })
+    
 
   def addOrder(self, order):
-    ret = self.write("myorder", 
-      "(printer_id,openid,order_time,file_num,total_fee,is_pay,is_ack,status)", 
-      f'({order.printer_id},"{order.openid}",NOW(),{order.file_num},{order.total_fee},{order.is_pay},{order.is_ack},{order.status})')
-    if ret:
-      # 返回新增订单的id
+    kvs = {
+        'printer_id': order.printer_id
+      , 'openid': quote(order.openid)
+      , 'order_time': 'NOW()'
+      , 'file_num': order.file_num
+      , 'total_fee': order.total_fee
+      , 'is_pay': order.is_pay
+      , 'is_ack': order.is_ack
+      , 'status': order.status
+    }
+    if self.write("myorder", kvs):
       return self.read("myorder", "max(order_id)")[0][0]
 
   def get_user_orders(self, openid, start, count):
@@ -145,31 +137,42 @@ class DbClient(object):
       return []
 
   def setStorageName(self, orderID, storageName):
-    return self.update("myorder", "storage_name", f"'{storageName}'", "order_id", orderID)
+    return self.update("myorder", "order_id", orderID
+              , {"storage_name": quote(storageName)})
 
   def setPageNum(self, orderID, pageNum):
-    return self.update("myorder", "page_num", pageNum, "order_id", orderID)
+    return self.update("myorder", "order_id", orderID
+              , {"page_num": pageNum})
 
   def setPrintSide(self, orderID, printSide:str):
-    return self.update("myorder", "print_side", f"'{printSide}'", "order_id", orderID)
+    return self.update("myorder", "order_id", orderID
+              , {"print_side": quote(printSide)})
+
+  def change_page_direction(self, file_id, page_direction):
+    return self.update("file", "file_id", file_id, 
+              {"page_direction": quote(page_direction)})
 
   def submitorder(self, order_id, is_ack, file_num):
-    sql = f'update myorder set is_ack={is_ack},file_num={file_num} where order_id={order_id};'
-    return self.doSQL(sql, True)
+    return self.update("myorder", "order_id", order_id, {
+        "is_ack": is_ack
+      , "file_num": file_num
+      })
 
   def ispay(self, order_id):
-    sql = f'update myorder set is_pay=1 where order_id={order_id};'
-    return self.doSQL(sql, True)
+    return self.update("myorder", "order_id", order_id, {
+        "is_pay": 1
+      })
 
   def ack_printing(self, order_id):
-    sql = f'update myorder set is_ack=1 where order_id={order_id};'
-    return self.doSQL(sql, True)
+    return self.update("myorder", "order_id", order_id, {
+        "is_ack": 1
+      })
 
   def update_order_fee(self, fee:int, order_id:int):
-    return self.update("myorder", "total_fee", fee, "order_id", order_id)
+    return self.update("myorder", "order_id", order_id
+              , {"total_fee": fee})
 
   def dbresToOrderObject(self, ret):
-    # 使用数据库查询结果生产order对象
     orderList = []
     for i in ret:
       oneOrder = Order(dbres=i)
@@ -177,7 +180,6 @@ class DbClient(object):
     return orderList
 
   def dbres_to_file(self, ret):
-    # 使用数据库查询结果生产file对象
     file_list = []
     for i in ret:
       file = File(dbres=i)
@@ -204,7 +206,8 @@ class DbClient(object):
     return self.dbresToOrderObject(ret)
 
   def fileComplete(self, file_id):
-    return self.update("file", "status", "True", "file_id", file_id)
+    return self.update("file", "file_id", file_id
+              , {"status": True})
 
 
 
@@ -219,12 +222,35 @@ class DbClient(object):
     sql = f"SELECT {key} FROM {table} {quireword};"
     return self.doSQL(sql, True)
 
-  def write(self, table:str, keys:str, values:str):
-    sql = f"INSERT INTO {table} {keys} VALUES {values};"
+  def write(self, table:str, kvs:dict):
+    notFirst = False
+    for k,v in kvs.items():
+      if notFirst:
+        keys += " ,"
+        values += " ,"
+      else:
+        notFirst = True
+
+      keys += f"`{k}`"
+      if v:
+        values += v if v is str else str(v)
+      else:
+        values += 'NULL'
+
+    sql = f"INSERT INTO `{table}` ({keys}) VALUES ({values});"
     return self.doSQL(sql, False)
 
-  def update(self, table, key, value, column_name, column_value):
-    sql = f"UPDATE {table} SET {key} = {value} WHERE {column_name} = {column_value}"
+  def update(self, table:str, column_name:str, column_value, kvs:dict):
+    notFirst = False
+    for k,v in kvs.items():
+      if notFirst:
+        keys += " ,"
+        values += " ,"
+      else:
+        notFirst = True
+      
+      sets += f"`{k}`={v}"
+    sql = f"UPDATE `{table}` SET {sets} WHERE `{column_name}`={column_value}"
     return self.doSQL(sql, False)
 
 
