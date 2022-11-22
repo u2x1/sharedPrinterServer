@@ -90,8 +90,8 @@ class DbClient(object):
         'file_id': file.file_id
       , 'file_size': file.file_size
       , 'file_type': quote(file.file_type)
-      , 'file_name': quote(file.order_id)
-      , 'storage_name': quote(file.file_name)
+      , 'file_name': quote(file.file_name)
+      , 'storage_name': quote(file.storage_name)
       , 'openid': quote(file.openid)
       , 'order_id': file.order_id
       , 'page_num': file.page_num

@@ -80,6 +80,7 @@ def addorder():
     order = Order(
         printer_id = form["printer_id"],
         openid = form["openid"],
+        status = False,
         )
     order_id = db.addOrder(order)
     order.order_id = order_id
@@ -170,6 +171,7 @@ def uploadfile():
         page_num = page_num,
         page_direction = form.get("page_direction"),
         file_type = form.get("file_type"),
+        status = False
         )
     file_id = db.addFile(file)
     response = make_response({
@@ -210,7 +212,8 @@ def submitorder():
             is_duplex = i["is_duplex"],
             page_range = range,
             page_direction = i["page_direction"],
-            copy_num = i["copy_num"]
+            copy_num = i["copy_num"],
+            status = False
             )
         db.updateFileInfo(file)
     return {
