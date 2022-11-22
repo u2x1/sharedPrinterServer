@@ -205,7 +205,7 @@ def submitorder():
         file = File(
             file_id = i['file_id'],
             is_duplex = i["is_duplex"],
-            is_booklet = i["is_booklet"],
+            is_booklet = i.get("is_booklet", 0),
             page_range = range,
             page_direction = i["page_direction"],
             copy_num = i["copy_num"],
