@@ -237,7 +237,7 @@ class DbClient(object):
         notFirst = True
 
       keys += f"`{k}`"
-      if v:
+      if v is not None:
         values += v if v is str else str(v)
       else:
         values += 'NULL'
@@ -254,7 +254,7 @@ class DbClient(object):
       else:
         notFirst = True
       
-      sets += f"`{k}`={v}"
+      sets += f"`{k}`={v if v is not None else 'NULL'}"
     sql = f"UPDATE `{table}` SET {sets} WHERE {column_name}={column_value}"
     return self.doSQL(sql, False)
 

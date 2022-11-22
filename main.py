@@ -75,12 +75,9 @@ def getPrinter():
 def addorder():
     form = json.loads(request.data)
 
-    printer_id = form["printer_id"]
-    openid = form["openid"]
     order = Order(
         printer_id = form["printer_id"],
         openid = form["openid"],
-        status = False,
         )
     order_id = db.addOrder(order)
     order.order_id = order_id
@@ -212,7 +209,6 @@ def submitorder():
             page_range = range,
             page_direction = i["page_direction"],
             copy_num = i["copy_num"],
-            status = False
             )
         db.updateFileInfo(file)
     return {
