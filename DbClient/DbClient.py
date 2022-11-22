@@ -89,9 +89,10 @@ class DbClient(object):
     kvs = {
         'file_id': file.file_id
       , 'file_size': file.file_size
-      , 'file_type': file.file_type
+      , 'file_type': quote(file.file_type)
+      , 'file_name': quote(file.order_id)
       , 'storage_name': quote(file.file_name)
-      , 'open_id': quote(file.open_id)
+      , 'openid': quote(file.openid)
       , 'order_id': file.order_id
       , 'page_num': file.page_num
       , 'copy_num': file.copy_num
@@ -224,10 +225,12 @@ class DbClient(object):
 
   def write(self, table:str, kvs:dict):
     notFirst = False
+    keys = ""
+    values = ""
     for k,v in kvs.items():
       if notFirst:
-        keys += " ,"
-        values += " ,"
+        keys += ", "
+        values += ", "
       else:
         notFirst = True
 
@@ -242,15 +245,15 @@ class DbClient(object):
 
   def update(self, table:str, column_name:str, column_value, kvs:dict):
     notFirst = False
+    sets = ""
     for k,v in kvs.items():
       if notFirst:
-        keys += " ,"
-        values += " ,"
+        sets += ", "
       else:
         notFirst = True
       
       sets += f"`{k}`={v}"
-    sql = f"UPDATE `{table}` SET {sets} WHERE `{column_name}`={column_value}"
+    sql = f"UPDATE `{table}` SET {sets} WHERE {column_name}={column_value}"
     return self.doSQL(sql, False)
 
 
