@@ -9,7 +9,7 @@ from mytool.Order import Order
 from mytool.File import File
 
 def quote(s:str):
-  return "'"+s+"'" if s else 'NULL'
+  return "'"+s+"'" if s is not None else 'NULL'
 
 class DbClient(object):
   def __init__(self, host, account, password, databaseName):
