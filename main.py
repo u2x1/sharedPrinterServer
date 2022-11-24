@@ -66,9 +66,7 @@ def getPrinterSleepStatus():
     if printer_id==None:
         return "arg error"
     else:
-        ret = db.get_printer_info(printer_id)
-        return jsonify(ret)
-    return "ok"
+        return db.checkPrinterSleepness(printer_id)
 
 
 @app.route('/wwkserver/printer/')
