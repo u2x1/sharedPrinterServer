@@ -60,6 +60,17 @@ def getip():
     db.writeIP(ip)
     return "ok"
 
+@app.route('/wwkserver/isprintersleep/')
+def getPrinterSleepStatus():
+    printer_id = request.args.get('printerid')
+    if printer_id==None:
+        return "arg error"
+    else:
+        ret = db.get_printer_info(printer_id)
+        return jsonify(ret)
+    return "ok"
+
+
 @app.route('/wwkserver/printer/')
 def getPrinter():
     printer_id = request.args.get('printerid')
@@ -167,7 +178,7 @@ def uploadfile():
         upload_time = form.get("upload_time"),
         page_num = page_num,
         page_direction = form.get("page_direction"),
-        file_type = form.get("file_type"),
+        file_type = form.get("file_type", "file"),
         status = False
         )
     file_id = db.addFile(file)
@@ -331,6 +342,25 @@ def getincard():
     return response
 # ---------------------------------------------通常为终端使用--------------------------------------
 
+@app.route('/wwkserver/markawake/', methods=['GET'])
+def printerAwake():
+    printerid = request.args.get('printerid')
+    if printerid==None:
+        return 'args error'
+    else:
+        db.markPrinterAwake(printerid)
+        return 'ok'
+
+@app.route('/wwkserver/marksleep/', methods=['GET'])
+def printerSleep():
+    printerid = request.args.get('printerid')
+    if printerid==None:
+        return 'args error'
+    else:
+        db.markPrinterSleep(printerid)
+        return 'ok'
+
+
 @app.route('/wwkserver/checkmyorder/', methods=['GET', 'POST'])
 def checkOrderByPrinterID():
     printerid = request.args.get('printerid')
@@ -371,7 +401,6 @@ def getFilesByOrderId():
 def get_file():
     file_name = request.args.get('filename')
     if file_name==None:
-        # do something
         return 'args error'
     else:
         print(file_name)
@@ -383,7 +412,6 @@ def get_file():
 def fileok():
     fileid = request.args.get('fileid')
     if fileid==None:
-        # do something
         return 'args error'
     else:
         db.fileComplete(fileid)
@@ -393,7 +421,6 @@ def fileok():
 def oddSideOk():
     orderid = request.args.get('orderid')
     if orderid==None:
-        # do something
         return 'args error'
     else:
         try:

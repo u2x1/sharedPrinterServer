@@ -56,6 +56,7 @@ class DbClient(object):
         "name": i[4],
         "status": i[5],
         "tips": i[6],
+        "sleeping": i[7],
       }
       printerList.append(printer)
     return printerList
@@ -71,15 +72,27 @@ class DbClient(object):
         "name": i[4],
         "status": i[5],
         "tips": i[6],
+        "sleeping": i[7],
       }
       return printer
 
-  def activatePrinter(self, PrinterID):
-    return self.update("myprinter", "printer_id", PrinterID,
+  def markPrinterSleep(self, id):
+    return self.update("myprinter", "printer_id", id,
+              {"sleeping": 1})
+
+  def markPrinterAwake(self, id):
+    return self.update("myprinter", "printer_id", id,
+              {"sleeping": 0})
+  
+  def checkPrinterSleepness(self, id):
+    return self.read("myprinter", printer_id=id)[0][7]
+
+  def activatePrinter(self, id):
+    return self.update("myprinter", "printer_id", id,
               {"status": 1})
 
-  def deActivatePrinter(self, PrinterID):
-    return self.update("myprinter", "printer_id", PrinterID,
+  def deActivatePrinter(self, id):
+    return self.update("myprinter", "printer_id", id,
               {"status": 0})
 
 
