@@ -85,7 +85,7 @@ class DbClient(object):
               {"sleeping": 0})
   
   def checkPrinterSleepness(self, id):
-    return self.read("myprinter", printer_id=id)[0][7]
+    return self.read("myprinter", "sleeping", printer_id=id)[0][0]
 
   def activatePrinter(self, id):
     return self.update("myprinter", "printer_id", id,
