@@ -66,7 +66,7 @@ def getPrinterSleepStatus():
   if printer_id==None:
     return "arg error"
   else:
-    return db.checkPrinterSleepness(printer_id)
+    return { 'sleeping' : db.checkPrinterSleepness(printer_id) }
 
 
 @app.route('/wwkserver/printer/')
@@ -98,7 +98,6 @@ def addorder():
 
 def get_pdf_page(pdf_path):
   try:
-    page_direction = "portrait"
     pdf = pdfplumber.open(pdf_path)
     if pdf.pages[0].width > pdf.pages[0].height:
       page_direction = "landscape"
@@ -212,6 +211,7 @@ def submitorder():
       copy_num = i["copy_num"],
       is_duplex = i["is_duplex"],
       is_booklet = i.get("is_booklet", 0),
+      crop_margin = i.get("crop_margin", 0),
       page_direction = i["page_direction"],
 #       page_range = f"{start}-{end}",
       )
