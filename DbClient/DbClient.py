@@ -59,6 +59,7 @@ class DbClient(object):
         "sleeping": i[7],
         "single_page_price": i[8],
         "duplex_price": i[9],
+        "last_alive": i[10],
       }
       printerList.append(printer)
     return printerList
@@ -77,6 +78,7 @@ class DbClient(object):
         "sleeping": i[7],
         "single_page_price": i[8],
         "duplex_price": i[9],
+        "last_alive": i[10],
       }
       return printer
 
