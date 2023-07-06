@@ -14,7 +14,6 @@ from flask import Flask, request, jsonify, send_from_directory, make_response
 from mytool.Order import Order
 from mytool.File import File
 from DbClient.DbClient import DbClient
-from mytool.alivePrinter import AlivePrinters
 from document_cutting import cutting
 
 # from websocket_server.WebsocketServer import WsServer
@@ -28,7 +27,6 @@ idcard_directory = "/home/admin/flask_uwsgi/myserver/idCard/"
 db = DbClient("localhost","root","58251190abcdshe","printer")
 
 orderList = Queue(maxsize=0)
-# alivePrinter = AlivePrinters(db)
 app = Flask(__name__)
 # wsServer = WsServer(orderList, db)
 
@@ -358,8 +356,7 @@ def printerSleep():
 @app.route('/wwkserver/checkmyorder/', methods=['GET', 'POST'])
 def checkOrderByPrinterID():
   printerid = request.args.get('printerid')
-  # print(printerid, request.method)
-  # alivePrinter.keepAlive(printerid)
+  db.updateAliveTime(printerid)
   if printerid==None:
     return 'args error'
   ret = db.getOrderByPrinter(printerid)

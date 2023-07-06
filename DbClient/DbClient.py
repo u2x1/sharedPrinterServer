@@ -100,7 +100,9 @@ class DbClient(object):
               {"status": 0})
 
 
-
+  def updateAliveTime(self, id):
+    return self.update("myprinter", "printer_id", id,
+              {"last_alive": "NOW()"})
 
   def addFile(self, file):
     kvs = {
